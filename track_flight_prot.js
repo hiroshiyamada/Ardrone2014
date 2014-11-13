@@ -1,5 +1,5 @@
 
-var arDrone = require('..');
+var arDrone = require('..');//maybe should replace '..' to another code
 
 
 //get png image after that, create lastpng
