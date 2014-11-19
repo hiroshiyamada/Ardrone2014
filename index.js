@@ -5,7 +5,6 @@ var http = require('http');
 var cv = require('opencv');
 
 var client  = arDrone.createClient();
-client.createRepl();
 
 console.log('Connecting png stream ...');
 var pngStream = arDrone.createClient().getPngStream();
@@ -42,3 +41,10 @@ var server = http.createServer(function(req, res) {
 server.listen(8080, function() {
 	console.log('Serving latest png on port 8080 ...');
 });
+
+client.takeoff(function(){
+	// ここにコールバック関数を書く
+	// node-ar-droneのgithubのREADMEの関数リファレンスを参照する．
+	client.land();
+});
+
