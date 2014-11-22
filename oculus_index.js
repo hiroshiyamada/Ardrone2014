@@ -80,7 +80,7 @@
   });
 
   socket.subscribe("/drone/camera", function(data) {
-    swarm.drones[data.id].changeCamera(data.  camera);
+    swarm.drones[data.id].changeCamera(data.camera);
     return console.log('set drone %s camera to %s', data.id, data.camera);
   });
 
