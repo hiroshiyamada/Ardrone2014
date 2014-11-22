@@ -28,9 +28,9 @@
       return socket.publish("/drone/navdata/" + drone.id, data);
     });
   });
-  
-  swarm.png();
 
+  swarm.png();
+  
   app = express();
 
   app.configure(function() {
@@ -80,12 +80,12 @@
   });
 
   socket.subscribe("/drone/camera", function(data) {
-    swarm.drones[data.id].changeCamera(data.camera);
+    swarm.drones[data.id].changeCamera(data.  camera);
     return console.log('set drone %s camera to %s', data.id, data.camera);
   });
 
   socket.subscribe("/swarm/move", function(control) {
-    console.log('swarm move', control);
+    //console.log('swarm move', control);
     return swarm.move(control);
   });
 
@@ -112,7 +112,8 @@
   require("dronestream").listen(server, {
     ip: drone_ip,
     path: '/dronestream101',
-    timeout: 500
+    timeout: 500,
+    tcpVideoStream: swarm.drones[1].getVideoStream()
   });
 
 }).call(this);
