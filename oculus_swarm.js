@@ -63,28 +63,40 @@
         var pngStream = drone.getPngStream();
         var lastPng;
         pngStream.on('error', console.log).on('data', function(pngBuffer) {
-        	//console.log('Getting png stream ...');
-        	lastPng = pngBuffer;    
-        	cv.readImage(lastPng, function(err, im) {
-           		im.detectObject(cv.FACE_CASCADE, {}, function(err, faces) {
-              /***** face save *****
-        			for (var i = 0; i < faces.length; i++) {
-        				var x = faces[i];
-        				im.ellipse(x.x + x.width / 2, x.y + x.height / 2, x.width / 2, x.height / 2);
+          //console.log('Getting png stream ...');
+          lastPng = pngBuffer;
+          cv.readImage(lastPng, function(err, im) {
+            im.detectObject(cv.FACE_CASCADE, {}, function(err, faces) {
+              /***** original face save code ******
+              for (var i = 0; i < faces.length; i++) {
+                var x = faces[i];
+                im.ellipse(x.x + x.width / 2, x.y + x.height / 2, x.width / 2, x.height / 2);
                 console.log("face.x = " + x.x  + ", face.y = " + x.y + ", width = " + x.width + ", height" + x.height);
-        			}
+              }
               im.save('../out.jpg');              
-              **********************/
-
-              // 1 face only
+              *************************************/
+    
+              // up/down auto control
               if(faces.length == 1){
                 face = faces[0];
                 console.log("face.x = " + face.x  + ", face.y = " + face.y + ", width = " + face.width + ", height" + face.height);
+                if(face.y < cameraHeight/2){
+                  // 0.5 is speed. Speed must be from 0 to 1.
+                  drone.up(0.5);
+                  console.log("auto_up");
+                }else if(face.y > cameraHeight/2){
+                  drone.down(0.5);
+                  console.log("auto_down");
+                }
+              }else if(faces.length > 1){
+                console.log("multiple faces!!");
               }else{
-                face = null;
+                console.log("no face!!");
               }
-        		});
-        	})
+              // im.saveがないと何故かセグフォることがある
+              im.save('../out.jpg');
+            });
+          })
         });
       }
     });
@@ -131,18 +143,6 @@
       if (drone.isIddle()) {
         drone.stop();
       } else {
-        // for auto algorhythm
-        if(face != null){
-          console.log("face detected");
-          if(face.y < cameraHeight/2){
-            // 0.5 is speed. Speed must be from 0 to 1.
-            drone.up(0.5);
-            console.log("auto_up");
-          }else if(face.y > cameraHeight/2){
-            drone.down(0.5);
-            console.log("auto_down");
-          }
-        }
         /********** for oculus control ***********
         if (control.x < 0) {
           drone.left(-control.x);
