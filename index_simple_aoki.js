@@ -1,4 +1,5 @@
 // Run this to receive a png image stream from your drone.
+//adding latter code
 
 var arDrone = require('ar-drone');
 var http = require('http');
@@ -28,8 +29,8 @@ pngStream.on('error', console.log).on('data', function(pngBuffer) {
 			    //var x = face[i];
 			    face = faces[i];//change
 			    im.ellipse(x.x + x.width / 2, x.y + x.height / 2, x.width / 2, x.height / 2);
-			    face_x = x.x + x.width / 2;
-			    face_y = x.y + x.height / 2;
+			    face_x = x.x + x.width / 2; //add as center of faces
+			    face_y = x.y + x.height / 2; //add as center of faces
 			}
 			im.save('../out.jpg');
 		});
@@ -57,46 +58,47 @@ client.takeoff(function(){
     // ここにコールバック関数を書く
     // node-ar-droneのgithubのREADMEの関数リファレンスを参照する．
     
-    //center pointによってspeedを変化させる
+    //client.up(speed),client.down(speed), front, back, left, righを使う
+    //先週のswarm.addの中身を参考にする
     
+
+    //center pointによってspeedを変化させる
+    //speed can be a value from 0 to 1 (cf. README)   
+
     speed = 0;//initialize
 
-    while( TODO ){
-	if ((face_x - camewidth / 2 )< 0) {//right or left movement
-            speed = 1;
-	    client.left(speed);
-	} else if ((control.x - camewidth / 2 )> 0) {
-            speed = 1;
-	    client.right(speed);
-	}
-
-	//yet
-
-	if (control.y < 0) {//forward or back movement
-            drone.back(-control.y);
-	} else if (control.y > 0) {
-            drone.front(control.y);
-	}
-
-	if ((face_y - camehight / 2) < 0) {//up or down movement
-            speed = 1;
-	    client.up(speed);//minus???
-	} else if ((face_y- camehight / 2) > 0) {
-            speed = 1;
-	    client.down(speed);//plus???
-	}
-	
-	//yet
-
-	if (control.r < 0) {//turn right or left movement
-            drone.counterClockwise(-control.r);
-	} else if (control.r > 0) {
-            drone.clockwise(control.r);
-	}
+    
+    if ((face_x - camewidth / 2 )< 0) {//right or left movement
+        speed = 1;
+	client.left(speed);
+    } else if ((control.x - camewidth / 2 )> 0) {
+        speed = 1;
+	client.right(speed);
     }
-    //client.up(speed),client.down(speed), front, back, left, righを使う
-    //speed can be a value from 0 to 1
-    //先週のswarm.addの中身を参考にする
+
+    //no touch yet
+
+    if (control.y < 0) {//forward or back movement
+        drone.back(-control.y);
+    } else if (control.y > 0) {
+        drone.front(control.y);
+    }
+
+    if ((face_y - camehight / 2) < 0) {//up or down movement
+        speed = 1;
+	client.up(speed);
+    } else if ((face_y- camehight / 2) > 0) {
+        speed = 1;
+	client.down(speed);
+    }
+    
+    //no touch yet
+
+    if (control.r < 0) {//turn right or left movement
+        drone.counterClockwise(-control.r);
+    } else if (control.r > 0) {
+        drone.clockwise(control.r);
+    }
     
     client.land();
 });
