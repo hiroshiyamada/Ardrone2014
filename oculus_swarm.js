@@ -2,9 +2,13 @@
 (function() {
   var ardrone, swarm, _;
 
-  _ = require("underscore");
+  var face = null;
+  var cameraWidth = 640;
+  var cameraHeight = 360;
   var cv = require('opencv');
 
+  _ = require("underscore");
+  
   ardrone = require("ar-drone");
 
   swarm = [];
@@ -28,7 +32,7 @@
       var _name;
       if (drone.enabled) {
         drone.snooze(drone.inactivityTime);
-        console.log("drone[" + command.action + "]()");
+        //console.log("drone[" + command.action + "]()");
         return typeof drone[_name = command.action] === "function" ? drone[_name]() : void 0;
       }
     });
@@ -53,29 +57,49 @@
   };
 
   swarm.png = function() {
-      return swarm.forEach(function(drone) {
+    return swarm.forEach(function(drone) {
       if (drone.enabled) {
-          console.log('Getting png stream ...');
-    // Attempting to add pngStream
-    var pngStream = drone.getPngStream();
-    var lastPng;
-    pngStream.on('error', console.log).on('data', function(pngBuffer) {
-    	console.log('Getting png stream ...');
-    	lastPng = pngBuffer;    
-    	cv.readImage(lastPng, function(err, im) {
-    	    console.log("readImage");
-    		im.detectObject(cv.FACE_CASCADE, {}, function(err, faces) {
-    			for (var i = 0; i < faces.length; i++) {
-    				var x = faces[i];
-    				im.ellipse(x.x + x.width / 2, x.y + x.height / 2, x.width / 2, x.height / 2);
-    			}
-    			im.save('../out.jpg');
-    		});
-    	})
-    });
+        console.log('Creating png stream ...');
+        var pngStream = drone.getPngStream();
+        var lastPng;
+        pngStream.on('error', console.log).on('data', function(pngBuffer) {
+          //console.log('Getting png stream ...');
+          lastPng = pngBuffer;
+          cv.readImage(lastPng, function(err, im) {
+            im.detectObject(cv.FACE_CASCADE, {}, function(err, faces) {
+              /***** original face save code ******
+              for (var i = 0; i < faces.length; i++) {
+                var x = faces[i];
+                im.ellipse(x.x + x.width / 2, x.y + x.height / 2, x.width / 2, x.height / 2);
+                console.log("face.x = " + x.x  + ", face.y = " + x.y + ", width = " + x.width + ", height" + x.height);
+              }
+              im.save('../out.jpg');              
+              *************************************/
+    
+              // up/down auto control
+              if(faces.length == 1){
+                face = faces[0];
+                console.log("face.x = " + face.x  + ", face.y = " + face.y + ", width = " + face.width + ", height" + face.height);
+                if(face.y < cameraHeight/2){
+                  // 0.5 is speed. Speed must be from 0 to 1.
+                  drone.up(0.5);
+                  console.log("auto_up");
+                }else if(face.y > cameraHeight/2){
+                  drone.down(0.5);
+                  console.log("auto_down");
+                }
+              }else if(faces.length > 1){
+                console.log("multiple faces!!");
+              }else{
+                console.log("no face!!");
+              }
+              // im.saveがないと何故かセグフォることがある
+              im.save('../out.jpg');
+            });
+          })
+        });
       }
     });
-    
   }
 
   swarm.add = function(config) {
@@ -111,7 +135,7 @@
       if (control) {
         _.extend(drone.control, control);
         if (control) {
-          console.log(drone.control, control, drone.isIddle());
+          //console.log(drone.control, control, drone.isIddle());
         }
       } else {
         control = drone.control;
@@ -119,6 +143,7 @@
       if (drone.isIddle()) {
         drone.stop();
       } else {
+        /********** for oculus control ***********
         if (control.x < 0) {
           drone.left(-control.x);
         } else if (control.x > 0) {
@@ -139,6 +164,7 @@
         } else if (control.r > 0) {
           drone.clockwise(control.r);
         }
+        ******************************************/
       }
       return control;
     };
