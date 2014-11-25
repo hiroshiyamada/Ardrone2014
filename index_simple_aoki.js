@@ -26,8 +26,7 @@ pngStream.on('error', console.log).on('data', function(pngBuffer) {
 	cv.readImage(lastPng, function(err, im) {
 		im.detectObject(cv.FACE_CASCADE, {}, function(err, faces) {
 			for (var i = 0; i < faces.length; i++) {
-			    //var x = face[i];
-			    face = faces[i];//change
+			    var x = face[i];
 			    im.ellipse(x.x + x.width / 2, x.y + x.height / 2, x.width / 2, x.height / 2);
 			    face_x = x.x + x.width / 2; //add as center of faces
 			    face_y = x.y + x.height / 2; //add as center of faces
@@ -70,10 +69,10 @@ client.takeoff(function(){
     
     if ((face_x - camewidth / 2 )< 0) {//right or left movement
         speed = 1;
-	client.left(speed);
+	client.right(speed);
     } else if ((control.x - camewidth / 2 )> 0) {
         speed = 1;
-	client.right(speed);
+	client.left(speed);
     }
 
     //no touch yet
