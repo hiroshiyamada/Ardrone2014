@@ -1,4 +1,3 @@
-
 var arDrone = require('..');//maybe should replace '..' to another code
 
 
