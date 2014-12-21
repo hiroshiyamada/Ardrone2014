@@ -79,51 +79,49 @@
       }
     });
   }
+  
+    function PID_ctrl(diff){
+        var ret;
+        var kp = 1;
+        
+        /*
+        kp     = 45;
+        var ki = 1;
+        var kd = 30;
+        
+        integratedDiff += diff;
+        
+        //var static prevDiff = 0; // staticはない怒
+        
+        ret = kp*diff + ki*(diff - prevDiff) + kd*integratedDiff;
+        var retMax = kp*1 + ki*(1 - prevDiff) + kd*integratedDiff;
+        prevDiff = diff;
+        
+        */
+        
+        ret = kp*diff;
+        
+        return Math.abs(ret) /* / Math.abs(retMax) */  ; //◀︎semicolonあります
+        
+    }
+    
+    function wait (){
+        var time1 = new Date().getTime();
+        var time2 = new Date().getTime();
+    
+        while ((time2 -  time1)<100){
+            time2 = new Date().getTime();
+        }
+    }
 
   // callback function for control
   function droneControl(image,centerPoint){
-        if(centerPoint[0] == 0 && centerPoint[1] == 0){
-            drone.stop();//add to stop
-            return;
-        }
         
     //anek  zone    
         var diff_x  = (centerPoint[0] - cameraWidth/2) / (cameraWidth/2); // -1.0 ~ 1.0
         var diff_y  = (centerPoint[1] - cameraHeight/2) / (cameraHeight/2);
         
-        function PID_ctrl(diff){
-            var ret;
-            var kp = 1;
-            
-            /*
-            kp     = 45;
-            var ki = 1;
-            var kd = 30;
-            
-            integratedDiff += diff;
-            
-            //var static prevDiff = 0; // staticはない怒
-            
-            ret = kp*diff + ki*(diff - prevDiff) + kd*integratedDiff;
-            var retMax = kp*1 + ki*(1 - prevDiff) + kd*integratedDiff;
-            prevDiff = diff;
-            
-            */
-            
-            ret = kp*diff;
-            
-            return Math.abs(ret) /* / Math.abs(retMax) */  ; //◀︎semicolonあります
-            
-        }
-        
-        function wait (){
-            var time1 = new Date().getTime();
-            var time2 = new Date().getTime();
-      
-            while ((time2 -  time1)<1000){
-                time2 = new Date().getTime();
-            }
-        }
+
         
         var ctrl_x = PID_ctrl(diff_x);
         var ctrl_y = PID_ctrl(diff_y);
@@ -158,20 +156,32 @@
             }
         } */  
         var countUpperThreshold = cameraWidth * cameraHeight / 10 / 10;
+        var countMiddleThreshold = cameraWidth * cameraHeight / 20 / 20;
         var countLowerThreshold = cameraWidth * cameraHeight / 30 / 30;
         
         if ( centerPoint[2] > countUpperThreshold) {
           
-            drone.back(0.5);
+            drone.back(0.1);
+            //wait();
          
           console.log("back");
           console.log(centerPoint[2]);
-        } else if ( centerPoint[2] < countLowerThreshold) {
-          
-            drone.front(0.5);
-          console.log("front");
-          console.log(centerPoint[2]);
-        } 
+        } else if ( centerPoint[2] > countMiddleThreshold ){
+            drone.stop();
+            //wait();
+            console.log("stop : middle < count < upper");
+            console.log(centerPoint[2]);
+        } else if ( centerPoint[2] > countLowerThreshold) {
+            drone.front(0.05);
+            //wait();
+            console.log("front");
+            console.log(centerPoint[2]);
+        } else {
+            drone.stop();
+            //wait();            
+            console.log("stop : nothing found");
+            console.log(centerPoint[2]);
+        }
         // im.saveがないと何故かセグフォることがある
         image.save('../out.jpg');
     }
@@ -179,9 +189,9 @@
   
   // BGR threshold for red detection
   // var lower_threshold = [0, 0, 150]; // RGB
-  var lower_threshold = [0, 128, 128]; // HSV
+  var lower_threshold = [100, 128, 128]; // HSV
   //var upper_threshold = [150, 150, 255]; // RGB
-  var upper_threshold = [15, 255, 255]; //HSV
+  var upper_threshold = [150, 255, 255]; //HSV
  
   // color detection
   function colorDetect(image) {
