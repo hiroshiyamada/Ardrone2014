@@ -6,6 +6,8 @@
   var cameraWidth = 640;
   var cameraHeight = 360;
   var cv = require('opencv');
+  var global_image;
+  var centerPoint = [0,0,0];
 
     //for PID_ctrl
     var prevDiff = 0;
@@ -70,10 +72,12 @@
           console.log('Getting png stream ...');
           lastPng = pngBuffer;
           cv.readImage(lastPng, function(err, im) {
-            var centerPoint;
+            //var centerPoint;
             centerPoint = colorDetect(im); 
             console.log(" x = " + centerPoint[0] + " y = " + centerPoint[1]);
-            droneControl(im, centerPoint);
+            global_image = im;
+            im.save('../out.jpg');
+            //droneControl(im, centerPoint);
           })
         });
       }
@@ -83,26 +87,8 @@
     function PID_ctrl(diff){
         var ret;
         var kp = 1;
-        
-        /*
-        kp     = 45;
-        var ki = 1;
-        var kd = 30;
-        
-        integratedDiff += diff;
-        
-        //var static prevDiff = 0; // staticはない怒
-        
-        ret = kp*diff + ki*(diff - prevDiff) + kd*integratedDiff;
-        var retMax = kp*1 + ki*(1 - prevDiff) + kd*integratedDiff;
-        prevDiff = diff;
-        
-        */
-        
         ret = kp*diff;
-        
         return Math.abs(ret) /* / Math.abs(retMax) */  ; //◀︎semicolonあります
-        
     }
     
     function wait (){
@@ -115,64 +101,29 @@
     }
 
   // callback function for control
-  function droneControl(image,centerPoint){
+    function droneControl(image,centerPoint){
         
-    //anek  zone    
         var diff_x  = (centerPoint[0] - cameraWidth/2) / (cameraWidth/2); // -1.0 ~ 1.0
         var diff_y  = (centerPoint[1] - cameraHeight/2) / (cameraHeight/2);
-        
-
-        
         var ctrl_x = PID_ctrl(diff_x);
         var ctrl_y = PID_ctrl(diff_y);
-    //anek zone owari
-        
-        // up/down/right/left auto control
-    /*    if(centerPoint[1] < cameraHeight/2){
-            // 0.5 is speed. Speed must be from 0 to 1.
-            for(var i = 0; i<5 ; i++){
-                drone.up(ctrl_y);
-            }
-            console.log("auto_up");
-        }else if(centerPoint[1] > cameraHeight/2){
-            for(var i = 0; i<5 ; i++){
-                drone.down(ctrl_y);
-            }
-            console.log("auto_down");
-        }
-        if(centerPoint[0] > cameraWidth/2){ 
-            //drone.left(0.5);
-            console.log("auto_CW");
-            for(var i = 0; i<5 ; i++){
-                drone.clockwise(ctrl_x);
-                //drone.clockwise(1.0);
-            }
-        }else if(centerPoint[0] < cameraWidth/2){
-            ///drone.right(0.5);
-            console.log("auto_CCW");
-            for(var i = 0; i<5 ; i++){
-                drone.counterClockwise(ctrl_x);
-                //drone.counterClockwise(1.0);
-            }
-        } */  
         var countUpperThreshold = cameraWidth * cameraHeight / 10 / 10;
         var countMiddleThreshold = cameraWidth * cameraHeight / 20 / 20;
         var countLowerThreshold = cameraWidth * cameraHeight / 30 / 30;
-        
+            
         if ( centerPoint[2] > countUpperThreshold) {
           
             drone.back(0.1);
             //wait();
-         
-          console.log("back");
-          console.log(centerPoint[2]);
+            console.log("back");
+            console.log(centerPoint[2]);
         } else if ( centerPoint[2] > countMiddleThreshold ){
             drone.stop();
             //wait();
-            console.log("stop : middle < count < upper");
+            console.log("stay");
             console.log(centerPoint[2]);
         } else if ( centerPoint[2] > countLowerThreshold) {
-            drone.front(0.05);
+            drone.front(0.1);
             //wait();
             console.log("front");
             console.log(centerPoint[2]);
@@ -183,7 +134,7 @@
             console.log(centerPoint[2]);
         }
         // im.saveがないと何故かセグフォることがある
-        image.save('../out.jpg');
+        
     }
   
   
@@ -223,8 +174,8 @@
         middleY = yCount / count;
     }
     //console.log(" x = " + middleX + " y = " + middleY);
-    var centerPoint = [middleX, middleY, count];
-    return centerPoint;
+    local_centerPoint = [middleX, middleY, count];
+    return local_centerPoint;
   }  
 
   swarm.add = function(config) {
@@ -256,41 +207,8 @@
       return drone.control.x === 0 && drone.control.y === 0 && drone.control.z === 0 && drone.control.r === 0;
     };
     drone.move = function(control) {
-      if (control) {
-        _.extend(drone.control, control);
-        if (control) {
-          //console.log(drone.control, control, drone.isIddle());
-        }
-      } else {
-        control = drone.control;
-      }
-      if (drone.isIddle()) {
-        drone.stop();
-      } else {
-        /********** for oculus control ***********
-        if (control.x < 0) {
-          drone.left(-control.x);
-        } else if (control.x > 0) {
-          drone.right(control.x);
-        }
-        if (control.y < 0) {
-          drone.back(-control.y);
-        } else if (control.y > 0) {
-          drone.front(control.y);
-        }
-        if (control.z < 0) {
-          drone.down(-control.z);
-        } else if (control.z > 0) {
-          drone.up(control.z);
-        }
-        if (control.r < 0) {
-          drone.counterClockwise(-control.r);
-        } else if (control.r > 0) {
-          drone.clockwise(control.r);
-        }
-        ******************************************/
-      }
-      return control;
+        droneControl(global_image, centerPoint);
+        return control;
     };
     drone.inactivityTime = 200;
     drone.inactivityTimeout = +(new Date) + drone.inactivityTime;
