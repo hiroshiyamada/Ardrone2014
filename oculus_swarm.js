@@ -25,7 +25,7 @@
 
     //for PID_ctrl
     var prevDiff = 0;
-    var integratedDiff;
+    var integratedDiff = 0;
     
   _ = require("underscore");
   
@@ -100,15 +100,20 @@
   
     function PID_ctrl(diff){
         var ret;
-        var kp = 1;
-        ret = kp*diff;
-        return Math.abs(ret) /* / Math.abs(retMax) */  ; //◀︎semicolonあります
+        var kp = 0.7;
+        var ki = 0;
+        var kd = 0.3;   
+        //pid control
+        integratedDiff += diff;
+        ret = kp*diff + kd*(diff - prevDiff) + ki*integratedDiff;
+        prevDiff = diff;
+        //make return value 0 ~ 1.0
+        return Math.abs(ret) >= 1.0 ? 1.0 : ret;
     }
     
     function wait (){
         var time1 = new Date().getTime();
         var time2 = new Date().getTime();
-    
         while ((time2 -  time1)<100){
             time2 = new Date().getTime();
         }
@@ -116,18 +121,23 @@
 
   // callback function for control
     function droneControl(image,centerPoint){
-        
+      
+      var countUpperThreshold = cameraWidth * cameraHeight / 8 / 8;
+        var countMiddleThreshold = cameraWidth * cameraHeight / 20 / 20;
+        var countLowerThreshold = cameraWidth * cameraHeight / 30 / 30;        
         var diff_x  = (centerPoint[0] - cameraWidth/2) / (cameraWidth/2); // -1.0 ~ 1.0
         var diff_y  = (centerPoint[1] - cameraHeight/2) / (cameraHeight/2);
+        var diff_z  = (centerPoint[2] - countMiddleThreshold) / (countMiddleThreshold);
         var ctrl_x = PID_ctrl(diff_x);
         var ctrl_y = PID_ctrl(diff_y);
-        var countUpperThreshold = cameraWidth * cameraHeight / 8 / 8;
-        var countMiddleThreshold = cameraWidth * cameraHeight / 25 / 25;
-        var countLowerThreshold = cameraWidth * cameraHeight / 30 / 30;
+        var ctrl_z = PID_ctrl(diff_z);
+        
+        //
+        //if()
             
         if ( centerPoint[2] > countUpperThreshold) {
           
-            drone.back(0.05);
+            drone.back(0.2);
             //wait();
             console.log("back");
             console.log(centerPoint[2]);
@@ -137,7 +147,7 @@
             console.log("stay");
             console.log(centerPoint[2]);
         } else if ( centerPoint[2] > countLowerThreshold) {
-            drone.front(0.05);
+            drone.front(0.2);
             //wait();
             console.log("front");
             console.log(centerPoint[2]);
