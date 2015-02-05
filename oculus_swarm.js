@@ -100,15 +100,20 @@
   
     function PID_ctrl(diff){
         var ret;
-        var kp = 0.7;
+        var kp = 0.5;
         var ki = 0;
-        var kd = 0.3;   
+        var kd = 0.1;   
         //pid control
         integratedDiff += diff;
         ret = kp*diff + kd*(diff - prevDiff) + ki*integratedDiff;
         prevDiff = diff;
-        //make return value 0 ~ 1.0
-        return Math.abs(ret) >= 1.0 ? 1.0 : ret;
+        //make return value -1.0 ~ 1.0
+        if(ret > 1.0){
+            ret = 1.0;
+        }else if(ret < -1.0){
+            ret = -1.0;
+        }
+        return ret;
     }
     
     function wait (){
@@ -122,22 +127,31 @@
   // callback function for control
     function droneControl(image,centerPoint){
       
-      var countUpperThreshold = cameraWidth * cameraHeight / 8 / 8;
-        var countMiddleThreshold = cameraWidth * cameraHeight / 20 / 20;
+        var countUpperThreshold = cameraWidth * cameraHeight / 8 / 8;
+        var countMiddleThreshold = cameraWidth * cameraHeight / 10 / 10;
         var countLowerThreshold = cameraWidth * cameraHeight / 30 / 30;        
         var diff_x  = (centerPoint[0] - cameraWidth/2) / (cameraWidth/2); // -1.0 ~ 1.0
-        var diff_y  = (centerPoint[1] - cameraHeight/2) / (cameraHeight/2);
-        var diff_z  = (centerPoint[2] - countMiddleThreshold) / (countMiddleThreshold);
+        var diff_y  = (centerPoint[1] - cameraHeight/2) / (cameraHeight/2);// -1.0 ~ 1.0
+        var diff_z  = (centerPoint[2] - countMiddleThreshold) / (countMiddleThreshold);// -1.0 ~ 1.0
         var ctrl_x = PID_ctrl(diff_x);
         var ctrl_y = PID_ctrl(diff_y);
         var ctrl_z = PID_ctrl(diff_z);
         
-        //
-        //if()
-            
+        //pid control
+        if(ctrl_z >= 0){
+            console.log("back");
+            console.log("ctrl_z=" + ctrl_z);
+            drone.back(ctrl_z*0.2);
+        }else{
+            console.log("front");
+            console.log("ctrl_z=" + ctrl_z);
+            drone.front(Math.abs(ctrl_z*0.2));
+        }
+        
+        /*    
         if ( centerPoint[2] > countUpperThreshold) {
           
-            drone.back(0.2);
+            drone.back(0.5);
             //wait();
             console.log("back");
             console.log(centerPoint[2]);
@@ -147,7 +161,7 @@
             console.log("stay");
             console.log(centerPoint[2]);
         } else if ( centerPoint[2] > countLowerThreshold) {
-            drone.front(0.2);
+            drone.front(0.5);
             //wait();
             console.log("front");
             console.log(centerPoint[2]);
@@ -157,7 +171,7 @@
             console.log("stop : nothing found");
             console.log(centerPoint[2]);
         }
-        // im.saveがないと何故かセグフォることがある
+        // im.saveがないと何故かセグフォることがある*/
         
     }
   
