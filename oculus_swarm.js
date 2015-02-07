@@ -103,7 +103,7 @@
 		var ret;
 		var kp = 0.5;
 		var ki = 0;
-		var kd = 0.3;
+		var kd = 0.1;
 		//pid control
 		integratedDiff += diff;
 		ret = kp * diff + kd * (diff - prevDiff) + ki * integratedDiff;
